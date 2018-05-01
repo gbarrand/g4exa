@@ -1,0 +1,63 @@
+#!/bin/sh -f
+
+bush_home=../../bush
+
+. ${bush_home}/args
+. ${bush_home}/g4args
+
+. ${bush_home}/app_header_use
+
+A01_home="${bush_home}/../inexlib/exlib/examples/geant4/A01"
+
+#//////////////////////////////////////////////////////
+#//////////////////////////////////////////////////////
+#//////////////////////////////////////////////////////
+
+if [ ${build_sdk_android} = "yes" ] ; then
+  cppflags="${cppflags} -DEXLIB_ANDROID_MAIN_DO_STD_EXIT"
+fi
+
+if [ ${build_visual} = "yes" ] ; then
+  cppflags="${cppflags} -bigobj"
+  cppflags="${cppflags} -DNOMINMAX" #disconnect the cpp macros min,max in windows.h
+fi
+
+#//////////////////////////////////////////////////////
+#//////////////////////////////////////////////////////
+#//////////////////////////////////////////////////////
+
+use_geant4=yes
+use_zip=yes
+use_csz=yes
+
+. ${bush_home}/use/csz
+. ${bush_home}/use/zip
+
+if [ ${build_geant4_10x} = "yes" ] ; then
+  . ${bush_home}/use/geant4_10_03_p01
+else
+  . ${bush_home}/use/geant4
+fi
+
+. ${bush_home}/app_trailer_use
+
+#////////////////////////////////////
+#////////////////////////////////////
+#////////////////////////////////////
+
+/bin/rm -f ./tmp_0
+#echo "../../bush/../inexlib/exlib/examples/geant4/A01/src/A01MagneticField.cc" >> ./tmp_0
+find ${A01_home}/src -name '*.cc' -print > ./tmp_0
+for file in $(cat ./tmp_0) ; do ccfiles="${ccfiles} ${file}";done
+/bin/rm -f ./tmp_0
+
+#ccfiles=
+
+cppflags="${cppflags} -I${A01_home}/include"
+cppflags="${cppflags} -I${A01_home}"
+
+#//////////////////////////////////////////////////////
+#//////////////////////////////////////////////////////
+#//////////////////////////////////////////////////////
+
+. ${bush_home}/app_trailer

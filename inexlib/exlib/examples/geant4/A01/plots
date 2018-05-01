@@ -1,0 +1,144 @@
+// Copyright (C) 2010, Guy Barrand. All rights reserved.
+// See the file exlib.license for terms.
+
+#ifndef A01_plots
+#define A01_plots
+
+#include <inlib/sg/plots>
+#include <exlib/sg/text_freetype>
+
+#include "_A01EventAction.hh"
+
+#ifdef G4ANALYSIS_USE
+#include <exlib/AIDA/h2plot>
+#include <exlib/AIDA/cloud2plot>
+#endif
+
+#ifdef G4ANALYSIS_INEX
+#include <inlib/sg/h2plot>
+#include <inlib/sg/cloud2plot>
+#endif
+
+namespace A01 {
+
+inline void set_plots(inlib::sg::plots& a_plots,A01EventAction& a_eva,bool a_set_regions = true){
+ 
+#ifdef G4ANALYSIS_USE
+  if(false) { //one plot :
+
+  if(a_set_regions) a_plots.set_regions(1,1);
+
+ {a_plots.set_current_plotter(0);
+  AIDA::IHistogram1D* dc1Hits = a_eva.dc1Hits;
+  inlib::sg::plotter& plotter = a_plots.current_plotter();
+  plotter.background_style().visible = true;
+  if(dc1Hits) {
+    plotter.add_plottable(new exlib::AIDA::h1d2plot(*dc1Hits));
+    //ui.style_from_res("A01",*plotter);
+  }}
+
+  } else { //four plots :
+
+  if(a_set_regions) a_plots.set_regions(2,2);
+
+ {a_plots.set_current_plotter(0);
+  AIDA::IHistogram1D* dc1Hits = a_eva.dc1Hits;
+  inlib::sg::plotter& plotter = a_plots.current_plotter();
+  if(dc1Hits) {
+    plotter.add_plottable(new exlib::AIDA::h1d2plot(*dc1Hits));
+  }}
+
+ {a_plots.next();
+  AIDA::ICloud2D* dc1XY = a_eva.dc1XY;
+  inlib::sg::plotter& plotter = a_plots.current_plotter();
+  if(dc1XY) {
+    plotter.add_plottable(new exlib::AIDA::cloud2D_2plot(*dc1XY));
+  }}
+
+ {a_plots.next();
+  AIDA::ICloud2D* dc2XY = a_eva.dc2XY;
+  inlib::sg::plotter& plotter = a_plots.current_plotter();
+  if(dc2XY) {
+    plotter.add_plottable(new exlib::AIDA::cloud2D_2plot(*dc2XY));
+  }}
+
+ {a_plots.next();
+  AIDA::ICloud2D* evstof = a_eva.evstof;
+  inlib::sg::plotter& plotter = a_plots.current_plotter();
+  if(evstof) {
+    plotter.add_plottable(new exlib::AIDA::cloud2D_2plot(*evstof));
+  }}
+
+  } //four plots.
+#endif
+
+#ifdef G4ANALYSIS_INEX
+  if(a_set_regions) a_plots.set_regions(2,2);
+
+ {a_plots.set_current_plotter(0);
+  inlib::histo::h1d* dc1Hits = a_eva.dc1Hits;
+  inlib::sg::plotter& plotter = a_plots.current_plotter();
+  plotter.background_style().visible = true;
+  if(dc1Hits) {
+    plotter.add_plottable(new inlib::sg::h1d2plot(*dc1Hits));
+  }}
+
+ {a_plots.next();
+  inlib::histo::c2d* dc1XY = a_eva.dc1XY;
+  inlib::sg::plotter& plotter = a_plots.current_plotter();
+  plotter.background_style().visible = true;
+  if(dc1XY) {
+    //NOTE : we should find a way to automatically switch the rep
+    //       when the c2d is auto converted to an histogram.
+    if(dc1XY->is_converted()) {
+      plotter.add_plottable(new inlib::sg::h2d2plot(dc1XY->histogram()));
+    } else {
+      plotter.add_plottable(new inlib::sg::c2d2plot(*dc1XY));
+    }
+  }}
+
+ {a_plots.next();
+  inlib::histo::c2d* dc2XY = a_eva.dc2XY;
+  inlib::sg::plotter& plotter = a_plots.current_plotter();
+  plotter.background_style().visible = true;
+  if(dc2XY) {
+    if(dc2XY->is_converted()) {
+      plotter.add_plottable(new inlib::sg::h2d2plot(dc2XY->histogram()));
+    } else {
+      plotter.add_plottable(new inlib::sg::c2d2plot(*dc2XY));
+    }
+  }}
+
+ {a_plots.next();
+  inlib::histo::c2d* evstof = a_eva.evstof;
+  inlib::sg::plotter& plotter = a_plots.current_plotter();
+  plotter.background_style().visible = true;
+  if(evstof) {
+    if(evstof->is_converted()) {
+      plotter.add_plottable(new inlib::sg::h2d2plot(evstof->histogram()));
+    } else {
+      plotter.add_plottable(new inlib::sg::c2d2plot(*evstof));
+    }
+  }}
+#endif
+
+}
+
+inline void book_again(inlib::sg::plots& a_plots,A01EventAction& a_eva,int a_auto_cnv_limit){
+#ifdef G4ANALYSIS_INEX
+  if(a_eva.m_cloud_auto_cnv_limit!=a_auto_cnv_limit) {
+    a_eva.m_cloud_auto_cnv_limit = a_auto_cnv_limit;
+    a_eva.Book();
+    a_plots.clear();
+    A01::set_plots(a_plots,a_eva,false);
+  }
+#else
+  (void)a_plots;
+  (void)a_eva;
+  (void)a_auto_cnv_limit;
+#endif
+}
+
+}
+
+#endif

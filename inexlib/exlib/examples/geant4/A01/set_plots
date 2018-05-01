@@ -1,0 +1,69 @@
+#ifndef A01_plots
+#define A01_plots
+
+#include "_A01EventAction.hh"
+
+#include <inlib/sg/plots>
+#include <inlib/sg/h2plot>
+#include <inlib/sg/cloud2plot>
+
+namespace A01 {
+
+inline void set_plots(A01EventAction& a_event_action,inlib::sg::plots& a_plots,bool a_set_regions = true) {
+  inlib::sg::plots& plots = a_plots;
+
+  typedef inlib::sg::plotter plotter_t;
+
+  if(a_set_regions) plots.set_regions(2,2);
+
+ {plots.set_current_plotter(0);
+  inlib::histo::h1d* dc1Hits = a_event_action.dc1Hits;
+  plotter_t& plotter = plots.current_plotter();
+  plotter.background_style().visible = true;
+  if(dc1Hits) {
+    plotter.add_plottable(new inlib::sg::h1d2plot(*dc1Hits));
+  }}
+  
+ {plots.next();
+  inlib::histo::c2d* dc1XY = a_event_action.dc1XY;
+  plotter_t& plotter = plots.current_plotter();
+  plotter.background_style().visible = true;
+  if(dc1XY) {
+    //NOTE : we should find a way to automatically switch the rep
+    //       when the c2d is auto converted to an histogram.
+    if(dc1XY->is_converted()) {
+      plotter.add_plottable(new inlib::sg::h2d2plot(dc1XY->histogram()));
+    } else {
+      plotter.add_plottable(new inlib::sg::c2d2plot(*dc1XY));
+    }
+  }}
+  
+ {plots.next();
+  inlib::histo::c2d* dc2XY = a_event_action.dc2XY;
+  plotter_t& plotter = plots.current_plotter();
+  plotter.background_style().visible = true;
+  if(dc2XY) {
+    if(dc2XY->is_converted()) {
+      plotter.add_plottable(new inlib::sg::h2d2plot(dc2XY->histogram()));
+    } else {
+      plotter.add_plottable(new inlib::sg::c2d2plot(*dc2XY));
+    }
+  }}
+  
+ {plots.next();
+  inlib::histo::c2d* evstof = a_event_action.evstof;
+  plotter_t& plotter = plots.current_plotter();
+  plotter.background_style().visible = true;
+  if(evstof) {
+    if(evstof->is_converted()) {
+      plotter.add_plottable(new inlib::sg::h2d2plot(evstof->histogram()));
+    } else {
+      plotter.add_plottable(new inlib::sg::c2d2plot(*evstof));
+    }
+  }}
+  
+}
+
+}
+
+#endif

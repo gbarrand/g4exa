@@ -1,0 +1,314 @@
+// Copyright (C) 2010, Guy Barrand. All rights reserved.
+// See the file g4exa.license for terms.
+
+#ifndef g4exa_g4exa_main
+#define g4exa_g4exa_main
+
+#include <string>
+
+namespace g4exa {
+
+class context {
+public:
+  context(const std::string&) {}
+  virtual ~context() {}
+protected:
+  context(const context&){}
+  context& operator=(const context&){return *this;}
+};
+
+}
+
+#include "version"
+
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+
+#include <exlib/png>
+#include <exlib/jpeg>
+
+#include <exlib/geant4/output>
+#include <exlib/geant4/viewer>
+#include <exlib/uzres>
+
+//////////////////////////////////////////////////////
+/// A01 //////////////////////////////////////////////
+//////////////////////////////////////////////////////
+#include "A01DetectorConstruction.hh"
+#include "A01PhysicsList.hh"
+#include "A01PrimaryGeneratorAction.hh"
+#include "_A01EventAction.hh"
+#include "set_plots"
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+#include <G4Version.hh>
+//#include <G4LossTableManager.hh>
+//#include <G4HadronicProcessStore.hh>
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+#include <exlib/uzres>
+
+#define CHECK_ENV(a__name) \
+  if(!inlib::is_env(#a__name)) {\
+    a_out << "pre_main : env variable " << #a__name << " not defined." << std::endl;\
+    return;\
+  }
+  
+#define UNFOLD_RES_FILE(a__zip,a__env,a__tmp_prefix,a__dir) \
+  if(!exlib::unfold(a_out,a_data_dir,a_res_dir,a_tmp_dir,m_tmps,a__zip,exlib::geant4::s_##a__env(),a__tmp_prefix,a__dir)) return;
+
+
+namespace g4exa {
+
+INLIB_GLOBAL_STRING(g4exa_)
+
+class pre_main : public exlib::geant4::output {
+  typedef exlib::geant4::output parent;
+public:
+  pre_main(std::ostream& a_out,
+           const std::string& a_data_dir,
+           const std::string& a_res_dir,
+           const std::string& a_tmp_dir)
+  :parent(a_out)
+  ,m_is_valid(false)
+  {
+    ///////////////////////////////////////////////////
+    /// unfold geant4 data files : ////////////////////
+    ///////////////////////////////////////////////////
+#if defined(G4VERSION_NUMBER) && G4VERSION_NUMBER>=1030
+    UNFOLD_RES_FILE("g4ndl_4_5.zip",G4NEUTRONHPDATA,s_g4exa_(),"G4NDL4.5");
+    UNFOLD_RES_FILE("g4emlow_6_50.zip",G4LEDATA,s_g4exa_(),"G4EMLOW6.50");
+    UNFOLD_RES_FILE("photonevaporation_4_3_2.zip",G4LEVELGAMMADATA,s_g4exa_(),"PhotonEvaporation4.3.2");
+    UNFOLD_RES_FILE("g4ensdfstate_2_1.zip",G4ENSDFSTATEDATA,s_g4exa_(),"G4ENSDFSTATE2.1");
+    UNFOLD_RES_FILE("g4saiddata_1_1.zip",G4SAIDXSDATA,s_g4exa_(),"G4SAIDDATA1.1");
+    CHECK_ENV(G4NEUTRONHPDATA)
+    CHECK_ENV(G4LEDATA)
+    CHECK_ENV(G4LEVELGAMMADATA)
+    CHECK_ENV(G4ENSDFSTATEDATA)
+    CHECK_ENV(G4SAIDXSDATA)
+#else
+  //UNFOLD_RES_FILE("g4emlow_6_23.zip",G4LEDATA,s_g4exa_(),"G4EMLOW6.23");
+    UNFOLD_RES_FILE("g4emlow_6_50.zip",G4LEDATA,s_g4exa_(),"G4EMLOW6.50");
+    CHECK_ENV(G4LEDATA)
+#endif
+
+    // disconnect Geant4 output :
+    parent::disable_geant4_output();
+
+    m_is_valid = true;
+  }
+  virtual ~pre_main(){}
+protected:
+  pre_main(const pre_main& a_from):parent(a_from),m_is_valid(false){}
+  pre_main& operator=(pre_main&){return*this;}
+protected:
+  bool m_is_valid;
+  std::vector<std::string> m_tmps;
+};
+
+}
+
+#undef CHECK_ENV
+#undef UNFOLD_RES_FILE
+
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+
+namespace g4exa {
+
+class main
+:public pre_main //WARNING : must be before exlib::geant4::run_manager.
+,public exlib::geant4::run_manager
+,public exlib::geant4::viewer
+{
+  typedef pre_main parent_pre_main;
+  typedef exlib::geant4::run_manager parent_run_manager;
+  typedef exlib::geant4::viewer parent_viewer;
+private:
+  INLIB_CLASS_STRING_VALUE(cloud_auto_cnv_limit,cloud auto cnv limit)  
+protected:
+  virtual inlib::sg::node* create_main_menu() {
+
+    inlib::sg::list* list = parent_viewer::create_home_menu();
+    
+    inlib::sg::add_image_item_after(*this,*list,s_reset(),s_params(),"system_config_boot.jpg",
+                                    action_params,inlib::sg::pos_data(false,0,0));
+
+   {std::vector<std::string> about;
+    about.push_back("App : g4exa");
+    about.push_back("Version : "+std::string(G4EXA_VERSION));
+    about.push_back("Author : Guy Barrand");
+    std::string stmp;
+    if(!inlib::num2s(G4VERSION_NUMBER,stmp)){}
+    about.push_back("on Geant4 : "+stmp);
+    inlib::sg::add_image_item_after(*this,*list,s_utils(),s_about(),"icon.jpg",inlib::sg::action_about,about);}
+
+    return list;
+  }
+  
+  virtual void event_end() {
+    if(!m_event_action) return;
+    if(!m_event_action->build_plots()) return;
+    inlib::sg::plots& plots = get_plots();
+    A01::set_plots(*m_event_action,plots);
+  }
+  
+  virtual void create_histos() {
+    if(!m_event_action) return;
+    m_event_action->create_histos();
+    inlib::sg::plots& plots = get_plots();
+    plots.clear();
+    A01::set_plots(*m_event_action,plots,false);
+  }
+  virtual void reset_histos() {
+    if(!m_event_action) return;
+    m_event_action->reset_histos();
+    inlib::sg::plots& plots = get_plots();
+    plots.touch_plotters();
+  }
+  
+
+  virtual void set_entries_params(inlib::sg::entries& a_widget) {
+    if(!m_event_action) return;
+    a_widget.add_int(s_cloud_auto_cnv_limit(),m_event_action->clouds_auto_cnv_limit());
+  //a_widget.add_uint("next event sleep (msec)",
+  }
+  
+  virtual void set_param(const std::string& a_param,const std::string& a_value,std::string& a_warn) {
+    a_warn.clear();
+    if(a_param==s_cloud_auto_cnv_limit()) {
+      if(!m_event_action) {
+        a_warn = "no event action";
+        return;
+      }
+      int limit;
+      if(!inlib::to(a_value,limit)) {
+        a_warn= a_value+" not a number";
+	return;
+      }
+      if(limit!=m_event_action->clouds_auto_cnv_limit()) {
+        m_event_action->set_clouds_auto_cnv_limit(limit);
+        inlib::sg::plots& plots = get_plots();
+        plots.clear();
+        A01::set_plots(*m_event_action,plots,false);
+      }
+    } else {
+      a_warn = "unknown param "+a_param;
+    }
+  }
+  
+  virtual bool insh_dispatch(const std::string& a_cmd,const std::vector<std::string>& a_args) {
+    if(a_cmd=="beam_on_one"){
+      action_beam_on_one(*this);
+      return true;
+    }
+    return parent_viewer::insh_dispatch(a_cmd,a_args);
+  }
+public:
+  main(std::ostream& a_out,
+       inlib::sg::render_manager& a_gl_mgr,
+       const inlib::sg::base_freetype& a_ttf,
+       const inlib::sg::selection& a_selection,
+       const std::string& a_data_dir,
+       const std::string& a_res_dir,
+       const std::string& a_out_dir,
+       const std::string& a_tmp_dir,
+       bool /*a_verbose*/,
+       unsigned int /*a_mem_limit*/)
+  :parent_pre_main(a_out,a_data_dir,a_res_dir,a_tmp_dir)
+  ,parent_run_manager()
+  ,parent_viewer(parent_run_manager::get_me(),"g4exa",G4EXA_VERSION,a_out,a_gl_mgr,a_ttf,a_selection,a_data_dir,a_res_dir)
+  ,m_event_action(0)
+  {
+    if(!m_is_valid) return;
+    m_tmp_dirs = m_tmps;
+    
+    m_out_dir = a_out_dir;
+    m_tmp_dir = a_tmp_dir;
+
+   {std::string pwd;
+    if(!inlib::dir::pwd(pwd)) {
+      viewer::m_out << "g4exa::main::main : can't get pwd." << std::endl;
+    } else {
+      //m_out << "pwd : " << pwd << std::endl;
+    }
+    m_pwd = pwd;}
+
+    m_image_readers.add_reader(inlib::file::s_format_jpeg(),new exlib::jpeg::reader());
+    m_image_readers.add_reader(inlib::file::s_format_png(),new exlib::png::reader());
+
+    //////////////////////////////////////
+    /// Geant4 : /////////////////////////
+    //////////////////////////////////////
+    // mandatory user initialization classes
+    parent_run_manager::SetUserInitialization(new A01DetectorConstruction);
+    parent_run_manager::SetUserInitialization(new A01PhysicsList);
+
+    // mandatory user action class
+    parent_run_manager::SetUserAction(new A01PrimaryGeneratorAction);
+
+    // optional user action classes
+    m_event_action = new A01EventAction; 
+    m_event_action->SetVerbose(0);
+    
+    m_event_action->set_clouds_auto_cnv_limit(1000); //for wall
+
+    parent_run_manager::SetUserAction(m_event_action);
+
+    parent_run_manager::Initialize(); // initialize Geant4 kernel
+
+    //G4LossTableManager::Instance()->SetVerbose(-1);
+    //G4HadronicProcessStore::Instance()->SetVerbose(-1);
+
+    ///////////////////////////////////////////////////
+    ///////////////////////////////////////////////////
+    ///////////////////////////////////////////////////
+
+   {inlib::sg::ortho* camera = new inlib::sg::ortho();
+    camera->height = 15.0*CLHEP::m;
+    float z = 10.*CLHEP::m;
+    camera->znear = 0.01f*z;
+    camera->zfar = 100*z;
+    camera->position = inlib::vec3f(0,0,z);
+    camera->focal = z;
+    camera->dx = z*0.003f;
+    camera->da = camera->da.value()/2;
+
+    replace_camera(camera);} //it takes ownership of camera.
+
+  //m_params.m_scene_screen_color = inlib::colorf_white();
+    m_params.m_scene_screen_color = inlib::colorf_black();
+
+    layout().set_rotate(1,0,0,inlib::fhalf_pi());
+    layout().mul_scale(0.7f);
+
+    show_plots();
+    A01::set_plots(*m_event_action,get_plots());
+  }
+  virtual ~main() {
+    // exlib::geant4::event_timer::stop() uses m_runManager. As it is called in exlib::geant4::viewer::~viewer, we have
+    // to stop timers before deleting m_runManager.
+    //parent_viewer::stop_event_anim();
+    //delete m_runManager;
+    clear_tmp();
+  }
+protected:
+  main(const main& a_from)
+  :parent_pre_main(a_from)
+  ,parent_run_manager()
+  ,parent_viewer(a_from)
+  ,m_event_action(0)
+  {}
+private:
+  main& operator=(const main&){return *this;}
+protected:
+  A01EventAction* m_event_action;
+};
+
+}
+
+#endif
