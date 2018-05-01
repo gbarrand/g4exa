@@ -217,7 +217,7 @@ public:
        const std::string& a_res_dir,
        const std::string& a_out_dir,
        const std::string& a_tmp_dir,
-       bool /*a_verbose*/,
+       bool a_verbose,
        unsigned int /*a_mem_limit*/)
   :parent_pre_main(a_out,a_data_dir,a_res_dir,a_tmp_dir)
   ,parent_run_manager()
@@ -244,6 +244,8 @@ public:
     //////////////////////////////////////
     /// Geant4 : /////////////////////////
     //////////////////////////////////////
+    if(a_verbose) parent_pre_main::enable_geant4_output();
+    
     // mandatory user initialization classes
     parent_run_manager::SetUserInitialization(new A01DetectorConstruction);
     parent_run_manager::SetUserInitialization(new A01PhysicsList);
