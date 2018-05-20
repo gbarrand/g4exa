@@ -244,6 +244,7 @@ public:
   bool build_plots() const {return m_build_plots;}
 protected:  
   class A01EventActionMessenger: public G4UImessenger {
+    typedef G4UImessenger parent;
   public:
     virtual void SetNewValue(G4UIcommand * command,G4String newValue) {
       if(command==verboseCmd) m_target.SetVerbose(verboseCmd->GetNewIntValue(newValue));
@@ -264,7 +265,7 @@ protected:
     }
     virtual ~A01EventActionMessenger() {delete verboseCmd;}
   private:
-    A01EventActionMessenger(const A01EventActionMessenger& a_from):m_target(a_from.m_target) {}
+    A01EventActionMessenger(const A01EventActionMessenger& a_from):parent(a_from),m_target(a_from.m_target) {}
     A01EventActionMessenger& operator=(const A01EventActionMessenger&) {return *this;}
   private:
     A01EventAction& m_target;
