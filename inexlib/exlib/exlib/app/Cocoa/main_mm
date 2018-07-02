@@ -328,12 +328,14 @@ int exlib_main(const std::string& a_app_name,int argc, char** argv,bool a_land =
   // Get the tmp directory :
   NSString* ns_tmp_dir = NSTemporaryDirectory();
   std::string tmp_dir = [ns_tmp_dir UTF8String];
+  inlib::strip(tmp_dir,inlib::trailing,'/');
 
   // Get the Documents directory :
   NSArray* paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask,YES);
   NSString* ns_doc_dir = [paths objectAtIndex:0];
 
   std::string doc_dir = [ns_doc_dir UTF8String];
+  inlib::strip(doc_dir,inlib::trailing,'/');
   if(!is_sandboxed) doc_dir += inlib::sep()+a_app_name;
   std::string data_dir = doc_dir;
   std::string out_dir = doc_dir;
