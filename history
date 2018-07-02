@@ -1,3 +1,5 @@
+ - add g4exa/Android to build for Android devices. See softinex/Android section for instructions.
+
 1.5.0 :
  - update to inlib/exlib of May 2018.
  - github : have ourex/geant4.10.03.p01. It simplifies the build.
