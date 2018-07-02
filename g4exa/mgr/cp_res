@@ -47,6 +47,7 @@ files="${files} document_export.jpg"
 files="${files} routing_step.jpg console.jpg tools.jpg"
 files="${files} connect_to_wall.jpg"
 files="${files} object_rotate_left.jpg stop_object_rotate_left.jpg"
+files="${files} white.jpg clear_histo.jpg"
 
 files="${files} ioda_cube.jpg"
 files="${files} set_current_region.jpg edit_plot.jpg"
