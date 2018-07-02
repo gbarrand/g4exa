@@ -167,7 +167,7 @@ protected:
 
     inlib::sg::add_image_item(*this,*list,s_utils(),"tools.jpg",inlib::sg::action_utils);
 
-    if(inlib::device::is_Android() || !inlib::device::stop_app_button() ){
+    if(/*inlib::device::is_Android() ||*/ !inlib::device::stop_app_button() ){
       inlib::sg::add_image_item(*this,*list,s_exit(),"application_exit.jpg",inlib::sg::action_set_to_exit);
     }
     
