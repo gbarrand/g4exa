@@ -37,6 +37,9 @@
  and then open a page with 0.0.0.0:8000 into a web browser supporting WebGL. (it works for us
  with Safari, Chrome, Firefox running on macOS).
 
+  There is material under <app>/Android to build for Android. See generic instructions under the
+ Android section of the softinex pages (URL below) to build for Android.
+ 
   See the <app> section on http://gbarrand.github.io for more.
 
  ///////////////////////////////////////////////////////////////////////////////////////////////////////
