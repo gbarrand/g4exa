@@ -38,7 +38,7 @@
  with Safari, Chrome, Firefox running on macOS).
 
   There is material under <app>/Android to build for Android. See generic instructions under the
- Android section of the softinex pages (URL below) to build for Android.
+ "Build for Android" section of the softinex pages (URL below) to build for Android.
  
   See the <app> section on http://gbarrand.github.io for more.
 
