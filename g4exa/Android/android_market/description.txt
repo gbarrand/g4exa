@@ -1,1 +1,0 @@
-g4exa is a "concept app" to demonstrate the port and usage of the Geant4 "particle through matter" simulator on a smartphone/tablet. The code is based over the Geant4 A01 example, the Geant4 core and the inlib/exlib tools.
