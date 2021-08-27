@@ -15,6 +15,6 @@
 
 typedef g4exa::main app_main_t;
 
-#import <exlib/app/Cocoa/main_mm>
+#import <exlib/app/Cocoa/main.mm>
 
-int main(int argc,char** argv) {return exlib_main<g4exa::context,g4exa::main>("g4exa",argc,argv);}
+int main(int argc,char** argv) {return exlib_main<g4exa::main>("g4exa",argc,argv);}

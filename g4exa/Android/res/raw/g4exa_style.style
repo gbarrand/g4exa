@@ -173,7 +173,8 @@
 
     <style name="background_style">
       <visible>true</visible>
-      <back_color>ROOT/grey19</back_color>
+ <!-- <back_color>ROOT/grey19</back_color> -->
+      <back_color>white</back_color>
       <!-- border : -->
       <color>black</color>
       <line_width>0.003</line_width> <!-- 0 = no border. In % of width -->
@@ -381,8 +382,17 @@
       <front_face>cw</front_face>
       <smoothing>true</smoothing>
     </style>
-
-
+    <!--
+    <style name="legends_style.0">
+      <back_color>ROOT/grey19</back_color>
+      <back_shadow>0.015</back_shadow>
+      <color>black</color>
+      <font>arialbd.ttf</font>
+      <font_modeling>font_pixmap</font_modeling>
+      <front_face>cw</front_face>
+      <smoothing>true</smoothing>
+    </style>
+    -->
     <style name="bins_style.0">
       <modeling>top_lines</modeling>
       <color>black</color>
@@ -624,7 +634,8 @@
 
     <style name="points_style.0">
       <color>black</color>	
-      <marker_size>3</marker_size>
+      <marker_size>20</marker_size>
+      <marker_style>cross</marker_style>
     </style>
   </plotter_style>
 

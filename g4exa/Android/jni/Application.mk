@@ -11,4 +11,5 @@
 
 APP_STL := c++_static       # with ndk-r17.
 APP_PLATFORM := android-14  # android-ndk-r15b compells that. Android >= 4.0.1 (Ice Cream Sandwich).
+#APP_PLATFORM := android-26
 

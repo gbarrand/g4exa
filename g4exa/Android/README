@@ -1,8 +1,17 @@
 
-  Execute :
-    csh> source ../../bush/setup/android-<version>.csh
+  First, you have to "source setup" your SDK and NDK development environment.
+ If needed, edit the bush/setup/android.[sh,csh] to point to it. Then :
+      sh> . ../../bush/setup/android.sh
+ or with a csh flavoured shell :      
+     csh> source ../../bush/setup/android.csh
 
- to setup the Android SDK and NDK development environment. And then :
-    csh> ../../bush/and_build
- 
- to build the application.
+  When done, you build the application with :
+    UNIX> ../../bush/and_build
+
+  NOTE : the jks password asked during the build to sign the .apk is 'android'.
+
+  Obviously you need to have on your machine an Android SDK and NDK, and have
+ the AndroidManifest.xml, [ant,local,project].properties, jni/Application.mk files
+ tuned properly for these SDK/NDK and Android API. See the "Build for Android" section
+ under the softinex portal for more
+

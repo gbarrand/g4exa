@@ -1,5 +1,9 @@
 LOCAL_PATH := $(call my-dir)
 
+INEXLIB_INC := ../../inexlib
+INEXLIB_SRC := ../../../inexlib
+OUREX_DIR := ../../../inexlib/ourex
+
 #/////////////////////////////////
 #/// Geant4 : ////////////////////
 #/////////////////////////////////
@@ -232,6 +236,10 @@ ZIP_SRC_FILES := \
  ../../../inexlib/ourex/zip/source/unzip.c\
  ../../../inexlib/ourex/zip/source/ioapi.c
 
+YACC_SRC_FILES := \
+  $(INEXLIB_SRC)/inlib/inlib/yacc/cexpr_lexer.cpp\
+  $(INEXLIB_SRC)/inlib/inlib/yacc/cexpr_eval.cpp
+
 A01_CFLAGS := \
  -I../../inexlib/exlib/examples/geant4/A01/include\
  -I../../inexlib/exlib/examples/geant4/A01
@@ -263,6 +271,7 @@ LOCAL_SRC_FILES := \
  $(FREETYPE_SRC_FILES)\
  $(JPEG_SRC_FILES)\
  $(ZLIB_SRC_FILES)\
+ $(YACC_SRC_FILES)\
  $(PNG_SRC_FILES)\
  $(GL2PS_SRC_FILES)\
  $(CSZ_SRC_FILES)\

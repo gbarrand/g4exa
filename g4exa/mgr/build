@@ -13,13 +13,36 @@ A01_home="${bush_home}/../inexlib/exlib/examples/geant4/A01"
 #//////////////////////////////////////////////////////
 #//////////////////////////////////////////////////////
 
+cppfiles="${cppfiles} ${inlib_home}/inlib/yacc/cexpr_lexer.cpp"
+cppfiles="${cppfiles} ${inlib_home}/inlib/yacc/cexpr_eval.cpp"
+
 if [ ${build_sdk_android} = "yes" ] ; then
   cppflags="${cppflags} -DEXLIB_ANDROID_MAIN_DO_STD_EXIT"
 fi
 
 if [ ${build_visual} = "yes" ] ; then
-  cppflags="${cppflags} -bigobj"
   cppflags="${cppflags} -DNOMINMAX" #disconnect the cpp macros min,max in windows.h
+fi
+
+if [ ${build_x11} = yes ] ; then
+  cppflags="${cppflags} -DEXLIB_APP_HAS_TERM -DEXLIB_APP_TERM_INSH"
+  use_Getline=yes
+fi
+
+#//////////////////////////////////////////////////////
+#//////////////////////////////////////////////////////
+#//////////////////////////////////////////////////////
+if [ ${build_x11} = yes ] ; then
+  cppflags="${cppflags} -DEXLIB_APP_HAS_TERM -DEXLIB_APP_TERM_INSH"
+  use_Getline=yes
+fi
+if [ ${build_sdk_mac} = yes ] ; then
+  cppflags="${cppflags} -DEXLIB_APP_HAS_TERM -DEXLIB_APP_TERM_INSH"
+  use_Getline=yes
+fi
+if [ ${build_visual} = yes ] ; then
+  cppflags="${cppflags} -DEXLIB_APP_HAS_TERM -DEXLIB_APP_TERM_INSH"
+  use_Getline=yes
 fi
 
 #//////////////////////////////////////////////////////
@@ -30,6 +53,7 @@ use_geant4=yes
 use_zip=yes
 use_csz=yes
 
+. ${bush_home}/use/Getline
 . ${bush_home}/use/csz
 . ${bush_home}/use/zip
 
@@ -53,7 +77,6 @@ for file in $(cat ./tmp_0) ; do ccfiles="${ccfiles} ${file}";done
 
 #ccfiles=
 
-cppflags="${cppflags} -I${A01_home}/include"
 cppflags="${cppflags} -I${A01_home}"
 
 #//////////////////////////////////////////////////////
