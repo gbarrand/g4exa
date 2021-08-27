@@ -4,10 +4,10 @@
 #ifndef g4exa_g4exa_version
 #define g4exa_g4exa_version
 
-#define G4EXA_MAJOR_VERSION 1
-#define G4EXA_MINOR_VERSION 5
+#define G4EXA_MAJOR_VERSION 2
+#define G4EXA_MINOR_VERSION 0
 #define G4EXA_PATCH_VERSION 0
-#define G4EXA_VERSION "1.5.0"
-#define G4EXA_VERSION_VRP "v1r5p0"
+#define G4EXA_VERSION "2.0.0"
+#define G4EXA_VERSION_VRP "v2r0p0"
 
 #endif

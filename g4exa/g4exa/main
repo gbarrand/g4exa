@@ -4,80 +4,223 @@
 #ifndef g4exa_g4exa_main
 #define g4exa_g4exa_main
 
-#include <string>
-
-namespace g4exa {
-
-class context {
-public:
-  context(const std::string&) {}
-  virtual ~context() {}
-protected:
-  context(const context&){}
-  context& operator=(const context&){return *this;}
-};
-
-}
-
 #include "version"
 
-//////////////////////////////////////////////////////
-//////////////////////////////////////////////////////
-//////////////////////////////////////////////////////
-
-#include <exlib/png>
-#include <exlib/jpeg>
+#ifdef _WIN32
+#include <windows.h>
+#undef ABSOLUTE
+#undef RELATIVE
+#endif
 
 #include <exlib/geant4/output>
 #include <exlib/geant4/viewer>
 #include <exlib/uzres>
+#include <exlib/insh/app>
+#include <exlib/insh/g4>
 
-//////////////////////////////////////////////////////
-/// A01 //////////////////////////////////////////////
-//////////////////////////////////////////////////////
-#include "A01DetectorConstruction.hh"
-#include "A01PhysicsList.hh"
-#include "A01PrimaryGeneratorAction.hh"
-#include "_A01EventAction.hh"
-#include "set_plots"
-//////////////////////////////////////////////////////
-//////////////////////////////////////////////////////
-//////////////////////////////////////////////////////
-#include <G4Version.hh>
-//#include <G4LossTableManager.hh>
-//#include <G4HadronicProcessStore.hh>
-//////////////////////////////////////////////////////
-//////////////////////////////////////////////////////
-//////////////////////////////////////////////////////
-#include <exlib/uzres>
+#ifdef APP_USE_DATA_CLIENT    
+#include <exlib/sg/rbsg_factories>
+#include <exlib/bsg_opener>
+#include <inlib/sg/rbsg_factories>
+#endif //APP_USE_DATA_CLIENT    
+
+#include <inlib/insh/ishell_args_class_cmd>
+
+#define UNFOLD_RES_FILE(a__zip,a__env,a__tmp_prefix,a__dir) \
+  if(!exlib::unfold(a_out,a_doc_dir,a_res_dir,a_tmp_dir,m_tmp_dirs,a__zip,exlib::geant4::s_##a__env(),a__tmp_prefix,a__dir)) return;
 
 #define CHECK_ENV(a__name) \
   if(!inlib::is_env(#a__name)) {\
-    a_out << "pre_main : env variable " << #a__name << " not defined." << std::endl;\
+    a_out << "env variable " << #a__name << " not defined." << std::endl;\
     return;\
   }
   
-#define UNFOLD_RES_FILE(a__zip,a__env,a__tmp_prefix,a__dir) \
-  if(!exlib::unfold(a_out,a_data_dir,a_res_dir,a_tmp_dir,m_tmps,a__zip,exlib::geant4::s_##a__env(),a__tmp_prefix,a__dir)) return;
+//////////////////////////////////////////////////////
+/// A01 //////////////////////////////////////////////
+//////////////////////////////////////////////////////
+#include <A01/DetectorConstruction.hh>
+#include <A01/PhysicsList.hh>
+#include <A01/PrimaryGeneratorAction.hh>
+#include <_A01EventAction.hh>
+#include <set_plots>
 
+#include <G4Version.hh>
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
 
 namespace g4exa {
 
-INLIB_GLOBAL_STRING(g4exa_)
-
-class pre_main : public exlib::geant4::output {
-  typedef exlib::geant4::output parent;
+class main : public exlib::geant4::output, public exlib::geant4::viewer {
+  typedef exlib::geant4::output parent_output;
+  typedef exlib::geant4::viewer parent_viewer;
 public:
-  pre_main(std::ostream& a_out,
-           const std::string& a_data_dir,
-           const std::string& a_res_dir,
-           const std::string& a_tmp_dir)
-  :parent(a_out)
-  ,m_is_valid(false)
+  static const std::string& s_version() {
+    static const std::string s_v(G4EXA_VERSION);
+    return s_v;
+  }
+  static const std::string& s_args_help() {
+    static const std::string s_v;
+    return s_v;
+  }
+protected:  
+  INLIB_CLASS_STRING(g4exa_)
+protected: //insh  
+  EXLIB_INSH_APP_HEADER(main)
+  static void insh_app_version(inlib::ishell& a_insh,const std::vector<std::string>&) {
+    a_insh.out(G4EXA_VERSION);
+  }
+  static void insh_app_create_histos(inlib::ishell& a_insh,const std::vector<std::string>&,main& a_main) {
+    static const std::string s_cmd("app_create_histos");
+    if(!a_main.m_event_action) {
+      a_insh.warn(s_cmd+": no event action.");
+      return;
+    }
+    a_main.m_event_action->create_histos();
+    inlib::omanager& omgr = a_main.get_omanager();
+    bool own = false; //important
+   {inlib::histo::h1d* h = a_main.m_event_action->m_dc1Hits;
+    omgr.manage_object<inlib::histo::h1d>(h,"dc1_hits",true,true,false,own);}
+   {inlib::histo::h1d* h = a_main.m_event_action->m_dc2Hits;
+    omgr.manage_object<inlib::histo::h1d>(h,"dc2_hits",true,true,false,own);}
+   {inlib::histo::c2d* c = a_main.m_event_action->m_dc1XY;
+    omgr.manage_object<inlib::histo::c2d>(c,"dc1_xy",true,true,false,own);}
+   {inlib::histo::c2d* c = a_main.m_event_action->m_dc2XY;
+    omgr.manage_object<inlib::histo::c2d>(c,"dc2_xy",true,true,false,own);}
+   {inlib::histo::c2d* c = a_main.m_event_action->m_evstof;
+    omgr.manage_object<inlib::histo::c2d>(c,"edep_vs_tof",true,true,false,own);}
+  }
+  static void insh_app_build_plots(inlib::ishell& a_insh,const std::vector<std::string>&,main& a_main) {
+    static const std::string s_cmd("app_build_plots");
+    if(!a_main.m_event_action) {
+      a_insh.warn(s_cmd+": no event action.");
+      return;
+    }
+    a_insh.out_bool(a_main.m_event_action->build_plots());
+  }
+  static void insh_app_get_param(inlib::ishell& a_insh,const std::vector<std::string>& a_args,main& a_main) {
+    static const std::string s_cmd("app_get_param");
+    if(!a_main.m_event_action) {
+      a_insh.warn(s_cmd+": no event action.");
+      return;
+    }
+    inlib::args _args(a_args);
+    INLIB_ISHELL_GET_ARG_FNH
+    INLIB_ISHELL_ARGS_UNEXPECTED
+    if(fnh=="clouds_auto_cnv_limit") {
+      a_insh.out_num(a_main.m_event_action->clouds_auto_cnv_limit());
+      return;
+    }
+    a_insh.warn(s_cmd+": unexpected name "+inlib::sout(fnh)+".");
+  }
+  static void insh_app_set_param(inlib::ishell& a_insh,const std::vector<std::string>& a_args,main& a_main) {
+    static const std::string s_cmd("app_set_param");
+    if(!a_main.m_event_action) {
+      a_insh.warn(s_cmd+": no event action.");
+      return;
+    }
+    if(a_args.size()!=2) {
+      a_insh.warn(s_cmd+": two arguments expected.");
+      return;
+    }
+    if(a_args[0]=="clouds_auto_cnv_limit") {
+      int value;
+      INLIB_ISHELL_ARG_INT(a_args[1],value)
+      if(value!=a_main.m_event_action->clouds_auto_cnv_limit()) {
+        a_main.m_event_action->set_clouds_auto_cnv_limit(value);
+        inlib::sg::plots* plots = a_main.get_plots();
+        if(plots) {
+          plots->clear();
+          A01::set_plots(*(a_main.m_event_action),*plots,false);
+        }
+      }
+      return;
+    }
+    a_insh.warn(s_cmd+": unexpected name "+inlib::sout(a_args[0])+".");
+  }
+public:  
+  main(std::ostream& a_out,
+       inlib::sg::render_manager& a_gl_mgr,
+       const inlib::sg::base_freetype& a_ttf,
+       const inlib::sg::selection& a_selection,
+       const std::string& a_doc_dir,
+       const std::string& a_res_dir,
+       const std::string& a_out_dir,
+       const std::string& a_tmp_dir,
+       bool a_verbose,
+       unsigned int a_mem_limit)
+  :parent_output(a_out,a_verbose?true:false)
+  ,parent_viewer("g4exa",G4EXA_VERSION,
+		 a_out,a_gl_mgr,a_ttf,a_selection,
+		 a_doc_dir,a_res_dir,a_out_dir,a_tmp_dir,a_verbose,a_mem_limit)
+  ,m_run_manager(0)		 
+  ,m_event_action(0)
   {
-    ///////////////////////////////////////////////////
-    /// unfold geant4 data files : ////////////////////
-    ///////////////////////////////////////////////////
+    //////////////////////////////////////
+    /// insh: ////////////////////////////
+    //////////////////////////////////////
+    insh_app_add_cmds();
+    EXLIB_INSH_G4_ADDS(insh(),*this)
+
+    INLIB_INSH_ADD_ISHELL_ARGS_GEANT4_OUTPUT_CMD(insh(),*this,g4_output,
+      exlib::insh_g4_output,
+"g4_output: g4_output enable/disable\n\
+  Enable, disable Geant4 output.\n\
+  Example:\n\
+    g4_output enable\n\
+    g4_apply_command '/control/verbose 2'\n\
+    g4_apply_command '/run/verbose 2'\n\
+    g4_beam_on\n\
+    g4_output disable\n\
+    g4_beam_on\n\
+")
+
+    INLIB_INSH_ADD_ISHELL_ARGS_CMD(insh(),app_version,
+      insh_app_version,
+      "app_version: app_version\n  Print the application version.\n")
+      
+    INLIB_INSH_ADD_ISHELL_ARGS_CLASS_CMD(insh(),main,(*this),app_create_histos,
+      insh_app_create_histos,
+"app_create_histos: app_create_histos\n\
+  Create the application histograms.\n\
+");
+ 
+    INLIB_INSH_ADD_ISHELL_ARGS_CLASS_CMD(insh(),main,(*this),app_build_plots,
+      insh_app_build_plots,
+"app_build_plots: app_build_plots\n\
+  Return true/false if it is needed to reassign histos/clouds to plotters.\n\
+");
+ 
+    INLIB_INSH_ADD_ISHELL_ARGS_CLASS_CMD(insh(),main,(*this),app_get_param,
+      insh_app_get_param,
+"app_get_param: app_get_param name\n\
+  Get value of a parameter of the application.\n\
+  Example:\n\
+    app_get_param clouds_auto_cnv_limit\n\
+");
+
+    INLIB_INSH_ADD_ISHELL_ARGS_CLASS_CMD(insh(),main,(*this),app_set_param,
+      insh_app_set_param,
+"app_set_param: app_set_param name value\n\
+  Set value of a parameter of the application.\n\
+  Example:\n\
+    app_set_param clouds_auto_cnv_limit 10000\n\
+");
+    
+    //////////////////////////////////////
+    //////////////////////////////////////
+    //////////////////////////////////////
+#ifdef APP_USE_DATA_CLIENT    
+    m_opener.add_ext(inlib::file::s_ext_bsg());
+   {inlib::sg::bsg_factories bfac;
+    inlib::sg::add_factories(bfac);
+    exlib::sg::add_factories(bfac);
+    m_opener.add_opener(inlib::file::s_format_bsg(),new exlib::bsg_opener(bfac));}
+#endif //APP_USE_DATA_CLIENT    
+
+    //////////////////////////////////////
+    /// Geant4 : /////////////////////////
+    //////////////////////////////////////
 #if defined(G4VERSION_NUMBER) && G4VERSION_NUMBER>=1030
     UNFOLD_RES_FILE("g4ndl_4_5.zip",G4NEUTRONHPDATA,s_g4exa_(),"G4NDL4.5");
     UNFOLD_RES_FILE("g4emlow_6_50.zip",G4LEDATA,s_g4exa_(),"G4EMLOW6.50");
@@ -95,223 +238,45 @@ public:
     CHECK_ENV(G4LEDATA)
 #endif
 
-    // disconnect Geant4 output :
-    parent::disable_geant4_output();
-
-    m_is_valid = true;
-  }
-  virtual ~pre_main(){}
-protected:
-  pre_main(const pre_main& a_from):parent(a_from),m_is_valid(false){}
-  pre_main& operator=(pre_main&){return*this;}
-protected:
-  bool m_is_valid;
-  std::vector<std::string> m_tmps;
-};
-
-}
-
-#undef CHECK_ENV
-#undef UNFOLD_RES_FILE
-
-//////////////////////////////////////////////////////
-//////////////////////////////////////////////////////
-//////////////////////////////////////////////////////
-
-namespace g4exa {
-
-class main
-:public pre_main //WARNING : must be before exlib::geant4::run_manager.
-,public exlib::geant4::run_manager
-,public exlib::geant4::viewer
-{
-  typedef pre_main parent_pre_main;
-  typedef exlib::geant4::run_manager parent_run_manager;
-  typedef exlib::geant4::viewer parent_viewer;
-private:
-  INLIB_CLASS_STRING_VALUE(cloud_auto_cnv_limit,cloud auto cnv limit)  
-protected:
-  virtual inlib::sg::node* create_main_menu() {
-
-    inlib::sg::list* list = parent_viewer::create_home_menu();
-    
-    inlib::sg::add_image_item_after(*this,*list,s_reset(),s_params(),"system_config_boot.jpg",
-                                    action_params,inlib::sg::pos_data(false,0,0));
-
-   {std::vector<std::string> about;
-    about.push_back("App : g4exa");
-    about.push_back("Version : "+std::string(G4EXA_VERSION));
-    about.push_back("Author : Guy Barrand");
-    std::string stmp;
-    if(!inlib::num2s(G4VERSION_NUMBER,stmp)){}
-    about.push_back("on Geant4 : "+stmp);
-    inlib::sg::add_image_item_after(*this,*list,s_utils(),s_about(),"icon.jpg",inlib::sg::action_about,about);}
-
-    return list;
-  }
-  
-  virtual void event_end() {
-    if(!m_event_action) return;
-    if(!m_event_action->build_plots()) return;
-    inlib::sg::plots& plots = get_plots();
-    A01::set_plots(*m_event_action,plots);
-  }
-  
-  virtual void create_histos() {
-    if(!m_event_action) return;
-    m_event_action->create_histos();
-    inlib::sg::plots& plots = get_plots();
-    plots.clear();
-    A01::set_plots(*m_event_action,plots,false);
-  }
-  virtual void reset_histos() {
-    if(!m_event_action) return;
-    m_event_action->reset_histos();
-    inlib::sg::plots& plots = get_plots();
-    plots.touch_plotters();
-  }
-  
-
-  virtual void set_entries_params(inlib::sg::entries& a_widget) {
-    if(!m_event_action) return;
-    a_widget.add_int(s_cloud_auto_cnv_limit(),m_event_action->clouds_auto_cnv_limit());
-  //a_widget.add_uint("next event sleep (msec)",
-  }
-  
-  virtual void set_param(const std::string& a_param,const std::string& a_value,std::string& a_warn) {
-    a_warn.clear();
-    if(a_param==s_cloud_auto_cnv_limit()) {
-      if(!m_event_action) {
-        a_warn = "no event action";
-        return;
-      }
-      int limit;
-      if(!inlib::to(a_value,limit)) {
-        a_warn= a_value+" not a number";
-	return;
-      }
-      if(limit!=m_event_action->clouds_auto_cnv_limit()) {
-        m_event_action->set_clouds_auto_cnv_limit(limit);
-        inlib::sg::plots& plots = get_plots();
-        plots.clear();
-        A01::set_plots(*m_event_action,plots,false);
-      }
-    } else {
-      a_warn = "unknown param "+a_param;
-    }
-  }
-  
-  virtual bool insh_dispatch(const std::string& a_cmd,const std::vector<std::string>& a_args) {
-    if(a_cmd=="beam_on_one"){
-      action_beam_on_one(*this);
-      return true;
-    }
-    return parent_viewer::insh_dispatch(a_cmd,a_args);
-  }
-public:
-  main(std::ostream& a_out,
-       inlib::sg::render_manager& a_gl_mgr,
-       const inlib::sg::base_freetype& a_ttf,
-       const inlib::sg::selection& a_selection,
-       const std::string& a_data_dir,
-       const std::string& a_res_dir,
-       const std::string& a_out_dir,
-       const std::string& a_tmp_dir,
-       bool a_verbose,
-       unsigned int /*a_mem_limit*/)
-  :parent_pre_main(a_out,a_data_dir,a_res_dir,a_tmp_dir)
-  ,parent_run_manager()
-  ,parent_viewer(parent_run_manager::get_me(),"g4exa",G4EXA_VERSION,a_out,a_gl_mgr,a_ttf,a_selection,a_data_dir,a_res_dir)
-  ,m_event_action(0)
-  {
-    if(!m_is_valid) return;
-    m_tmp_dirs = m_tmps;
-    
-    m_out_dir = a_out_dir;
-    m_tmp_dir = a_tmp_dir;
-
-   {std::string _pwd;
-    if(!inlib::dir::pwd(_pwd)) {
-      viewer::m_out << "g4exa::main::main : can't get pwd." << std::endl;
-    } else {
-      //m_out << "pwd : " << _pwd << std::endl;
-    }
-    m_pwd = _pwd;}
-
-    m_image_readers.add_reader(inlib::file::s_format_jpeg(),new exlib::jpeg::reader());
-    m_image_readers.add_reader(inlib::file::s_format_png(),new exlib::png::reader());
-
-    //////////////////////////////////////
-    /// Geant4 : /////////////////////////
-    //////////////////////////////////////
-    if(a_verbose) parent_pre_main::enable_geant4_output();
+    m_run_manager = new G4RunManager;
     
     // mandatory user initialization classes
-    parent_run_manager::SetUserInitialization(new A01DetectorConstruction);
-    parent_run_manager::SetUserInitialization(new A01PhysicsList);
+    m_run_manager->SetUserInitialization(new A01::DetectorConstruction);
+    m_run_manager->SetUserInitialization(new A01::PhysicsList);
 
     // mandatory user action class
-    parent_run_manager::SetUserAction(new A01PrimaryGeneratorAction);
+    m_run_manager->SetUserAction(new A01::PrimaryGeneratorAction);
 
     // optional user action classes
-    m_event_action = new A01EventAction; 
+    m_event_action = new A01::EventAction; 
     m_event_action->SetVerbose(0);
-    
-    m_event_action->set_clouds_auto_cnv_limit(1000); //for wall
 
-    parent_run_manager::SetUserAction(m_event_action);
+    m_run_manager->SetUserAction(m_event_action);
 
-    parent_run_manager::Initialize(); // initialize Geant4 kernel
-
-    //G4LossTableManager::Instance()->SetVerbose(-1);
-    //G4HadronicProcessStore::Instance()->SetVerbose(-1);
-
-    ///////////////////////////////////////////////////
-    ///////////////////////////////////////////////////
-    ///////////////////////////////////////////////////
-
-   {inlib::sg::ortho* camera = new inlib::sg::ortho();
-    camera->height = 15.0*CLHEP::m;
-    float z = 10.*CLHEP::m;
-    camera->znear = 0.01f*z;
-    camera->zfar = 100*z;
-    camera->position = inlib::vec3f(0,0,z);
-    camera->focal = z;
-    camera->dx = z*0.003f;
-    camera->da = camera->da.value()/2;
-
-    replace_camera(camera);} //it takes ownership of camera.
-
-  //m_params.m_scene_screen_color = inlib::colorf_white();
-    m_params.m_scene_screen_color = inlib::colorf_black();
-
-    layout().set_rotate(1,0,0,inlib::fhalf_pi());
-    layout().mul_scale(0.7f);
-
-    show_plots();
-    A01::set_plots(*m_event_action,get_plots());
+    m_run_manager->Initialize(); // initialize Geant4 kernel
   }
   virtual ~main() {
-    // exlib::geant4::event_timer::stop() uses m_runManager. As it is called in exlib::geant4::viewer::~viewer, we have
-    // to stop timers before deleting m_runManager.
-    //parent_viewer::stop_event_anim();
-    //delete m_runManager;
+    delete m_run_manager;
     clear_tmp();
   }
 protected:
   main(const main& a_from)
   :inlib::sg::ui(a_from)
   ,inlib::sg::alert(a_from)
-  ,parent_pre_main(a_from)
-  ,parent_run_manager()
+  ,parent_output(a_from.out(),true)
   ,parent_viewer(a_from)
+  ,m_run_manager(0)
   ,m_event_action(0)
   {}
 private:
   main& operator=(const main&){return *this;}
 protected:
-  A01EventAction* m_event_action;
+  G4RunManager* m_run_manager;
+  A01::EventAction* m_event_action;
 };
+
+#undef CHECK_ENV
+#undef UNFOLD_RES_FILE
 
 }
 
