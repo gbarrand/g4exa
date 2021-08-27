@@ -1,0 +1,7 @@
+#!insh
+startup.insh
+gui_hide_main_menu
+g4_vis_geometry
+g4_beam_on -number=100
+scene_write_to_paper -format=inzb_ps out.ps
+scene_write_to_paper -format=inzb_png out.png
