@@ -1,0 +1,7 @@
+#!insh
+
+histo_reset dc1_hits
+cloud_reset dc1_xy
+cloud_reset dc2_xy
+cloud_reset edep_vs_tof
+

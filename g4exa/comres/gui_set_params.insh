@@ -1,0 +1,16 @@
+#!insh
+
+cmd=gui_push_entries
+
+limit=`app_get_param clouds_auto_cnv_limit`
+cmd="${cmd} -int='clouds auto cnv limit:${limit}'"
+
+cmd="${cmd} -script='. gui_set_params_ok.insh'"
+
+eval ${cmd}
+
+gui_show_main_menu
+
+unset cmd
+unset limit
+
