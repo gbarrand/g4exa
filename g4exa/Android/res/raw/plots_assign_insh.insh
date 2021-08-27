@@ -1,0 +1,13 @@
+#!insh
+
+plots_set_current_plotter 0
+histo_plot -ref dc1_hits
+
+plots_set_current_plotter 1
+cloud_plot -ref dc1_xy
+
+plots_set_current_plotter 2
+cloud_plot -ref dc2_xy
+
+plots_set_current_plotter 3
+cloud_plot -ref edep_vs_tof
