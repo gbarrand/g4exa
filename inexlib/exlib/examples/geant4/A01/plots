@@ -22,7 +22,7 @@
 namespace A01 {
 
 inline void set_plots(inlib::sg::plots& a_plots,A01EventAction& a_eva,bool a_set_regions = true){
- 
+
 #ifdef G4ANALYSIS_USE
   if(false) { //one plot :
 
