@@ -23,6 +23,6 @@ void android_main(struct android_app* a_state) {
 
 //exlib_build_use inlib expat
 //exlib_build_use exlib png jpeg zlib inlib_glutess freetype
-//exlib_build_use GL Android
+//exlib_build_use Android
 
 
