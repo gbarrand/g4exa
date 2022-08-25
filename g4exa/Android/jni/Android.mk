@@ -82,8 +82,6 @@ THIS_CFLAGS := \
  \
  -I../../inexlib/ourex/png/png\
  \
- -I../../inexlib/ourex/gl2ps\
- \
  -I../../inexlib/ourex/zlib/include\
  \
  -I../../inexlib/ourex/zip/include
@@ -208,9 +206,6 @@ PNG_SRC_FILES := \
 CSZ_SRC_FILES := \
  ../../../inexlib/ourex/csz/src/inflate.c
 
-GL2PS_SRC_FILES := \
- ../../../inexlib/ourex/gl2ps/source/gl2ps.c
-
 # zlib exists on Android, but for consistency with other platforms
 # we take our own.
 #LOCAL_CFLAGS += -DEXLIB_USE_NATIVE_ZLIB
@@ -273,7 +268,6 @@ LOCAL_SRC_FILES := \
  $(ZLIB_SRC_FILES)\
  $(YACC_SRC_FILES)\
  $(PNG_SRC_FILES)\
- $(GL2PS_SRC_FILES)\
  $(CSZ_SRC_FILES)\
  $(A01_SRC_FILES)\
  ../main.cpp
